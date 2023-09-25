@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <title>My test page</title>
+
+    <!-- mobile first tag - also from bootstrap-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!--Bootstrap-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+    <style>
+        body{
+            font-size: 1.2em;
+            background-color: #f6f6f6; 
+            margin-top: 5px; 
+            margin-bottom: 5px;
+        }
+        .board{
+            background-color: #ededed;
+            padding: 2px 0px 2px 0px;
+        }
+        .card-contents-container{
+            padding: 10px;
+            margin: 2px;
+            background-color: #f6f6f6;
+            visibility: visible;
+            display: grid;
+            grid-template-columns: 50px 50px 70px minmax(320px, auto) 100px 80px 80px;
+            grid-template-rows: 40px;
+            align-items: center;
+        }
+        .issue-wrapper{
+            margin: 2px;
+        }
+        summary{
+            font-size: 1.2em;
+            background-color: #f6f6f6;
+        }
+        details:focus{
+            outline: blue;
+        }
+        .small-gray-text{
+            font-size: 0.8em;
+            color:gray;   
+        }
+        input {
+            background-color: transparent;
+            border: 0px solid;
+            border-color: inherit;
+            -webkit-box-shadow: none;
+            box-shadow: none;
+            border: none; /* Remove border */
+            outline: none; /* Remove focus outline */
+        }
+        input.editable-text-field:focus {
+            border: 1 solid gray; /* Remove border */
+            outline: none; /* Remove focus outline */
+            background-color: transparent; /* Make background transparent */
+            text-decoration: underline;
+            font-size: 1.2em; /* Adjust font size as needed */
+            color: #333; /* Text color */
+        }
+    
+        input.readonly-code{
+            border: none; /* Remove border */
+            outline: none; /* Remove focus outline */
+            color: gray; /* Text color */
+        }
+   
+    </style>
+
+</head>
+  <body style="background-color: #f6f6f6;">
+    
+    <div class="container-fluid">
+        <h1>Ahmedira</h1>
+        <hr>
+    </div>
+    <svg role="presentation" width="13" height="13" viewBox="5 5 13 13"><path d="M8.292 10.293a1.009 1.009 0 0 0 0 1.419l2.939 2.965c.218.215.5.322.779.322s.556-.107.769-.322l2.93-2.955a1.01 1.01 0 0 0 0-1.419.987.987 0 0 0-1.406 0l-2.298 2.317-2.307-2.327a.99.99 0 0 0-1.406 0z" fill="currentColor" fill-rule="evenodd"></path></svg>
+      <!--
+        Remember, some parts are editable, and some not
+
+    -->
+ 
+    {% if board_cards %}
+    <!--Div should be dark gray-->
+    <div class="container-fluid">
+
+        {% if board_cards.extra_board_id %}
+        <details class="container-fluid" open="true">
+            <summary> 
+                <strong>{{board_cards.extra_board_name}} </strong>
+                <input id="sprint-card-count" type="text" class="small-gray-text" readonly value="(0 issues)" />
+            </summary>
+            <div class="board">
+                <div id ="sprint" class="board" data-board="{{board_cards.extra_board_id}}" data-cards="0">
+
+                </div>
+            
+                <div class="text-left" style="padding:10px; align-items: center;">
+                    <span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" role="presentation">
+                            <path d="M13 11V3.993A.997.997 0 0012 3c-.556 0-1 .445-1 .993V11H3.993A.997.997 0 003 12c0 .557.445 1 .993 1H11v7.007c0 .548.448.993 1 .993.556 0 1-.445 1-.993V13h7.007A.997.997 0 0021 12c0-.556-.445-1-.993-1H13z" fill="currentColor" fill-rule="evenodd">
+                        
+                            </path>
+                        </svg>
+                    </span>
+                    <input type="button" onclick="createCardInSprint()" value="Create issue">
+                </div>
+            </div>  
+        </details>
+
+        {% endif %}
+
+        <br>
+
+        <details class="container-fluid" open="true">
+            <summary>
+                    <strong>{{board_cards.board_name}}</strong>
+                    <input id="backlog-card-count" class="small-gray-text" type="text" readonly value="(0 issues)"/>
+            </summary> 
+        
+            <div class="board">
+                <div id="backlog" data-board="{{board_cards.board_id}}" data-cards="0">
+                
+                </div>
+                        
+                <div class="text-left" style="padding:10px; align-items: center;">
+                    <span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" role="presentation">
+                            <path d="M13 11V3.993A.997.997 0 0012 3c-.556 0-1 .445-1 .993V11H3.993A.997.997 0 003 12c0 .557.445 1 .993 1H11v7.007c0 .548.448.993 1 .993.556 0 1-.445 1-.993V13h7.007A.997.997 0 0021 12c0-.556-.445-1-.993-1H13z" fill="currentColor" fill-rule="evenodd">
+                        
+                            </path>
+                        </svg>
+                    </span>
+                    <input type="button" onclick="createCardInBacklog()" value="Create issue">
+                </div>
+            </div>
+    
+        </details>
+      
+    </div>
+
+    {% endif %}
+
+    <script>
+        const backlog_board_name = "backlog";
+        const backlog_board = document.getElementById(`${backlog_board_name}`);
+        const backlog_board_id = backlog_board.getAttribute("data-board");
+        
+        const sprint_board_name = "sprint";
+        const sprint_board = document.getElementById(`${sprint_board_name}`);
+        const sprint_board_id = sprint_board.getAttribute("data-board");
+
+        let card_icon_values = ["Bugs", "Feature", "Task"];
+        let card_progress_values = ["Do", "Doing", "Done"];
+        let card_assignee_values = { "assignees": [
+                                    {
+                                        "id":"",
+                                        "name": "",
+                                        "img": ""
+                                    }
+                                    ]}
+
+        console.log("150-160 = fetch values")
+
+        function populate_assignees(project_id){
+            console.log("populating assignees... WIP")
+            let queryParameter = new URLSearchParams();
+            
+            queryParameter.append("project_id", `${project_id}`)
+
+            let url = '/api/fetchAssigneePool/?' + queryParameter.toString();
+
+            fetch(url, {
+                method: 'GET',
+            }) 
+            .then( response => response.json())
+            .then( data => {
+                card_assignee_values = data.assignees
+                console.log("data",data)
+            })
+        }
+
+        function populate_tasks(){
+            console.log("180 - populating tasks... WIP")
+            // we can make this static actually...
+            //first get the images and learn how to get this
+            //let queryParameter = new URLSearchParams();
+            
+        }
+
+        function refreshBoard(board_name, board_id){
+            let queryParameter = new URLSearchParams();
+            let headers = new Headers();
+            headers.append('Action', "R")
+
+            queryParameter.append("id", `${board_id}`)
+            
+            let url = '/api/collectCards/?' + queryParameter.toString();
+            let response_data
+
+            fetch(url, {
+                method: 'GET',
+                headers: headers,
+            })
+            .then(response => response.json())
+            .then(data => {
+               data.cards.forEach( function(card_json){
+                    createCardWrapper(board_name, card_json) 
+               }
+               );
+            })
+            .catch(error => {
+                console.error(error);
+            })
+                
+        }
+        
+        
+        function create_card(board_id, board_name){
+            let queryParameter = new URLSearchParams();
+            queryParameter.append("id", `${board_id}`);
+
+            let url = '/api/createCard/?' + queryParameter.toString();
+            let card_code
+            fetch(url, {
+                method: 'GET',
+            })
+            .then(response => response.json())
+            .then(data => {
+                createCardWrapper(board_name, data);
+            })
+            .catch(error => {
+                console.error(error);
+            })
+            
+        }
+        
+
+        function update_card(board_id, card_id){
+            let card_code = document.getElementById(`card-code-${card_id}`).getAttribute("value");
+            let queryParameter = new URLSearchParams();
+            queryParameter.append("id", `${board_id}`);
+            queryParameter.append("code", `${card_code}`);
+            
+            let url = '/api/updateCard/?' + queryParameter.toString();
+            
+            fetch(url, {
+                method: 'GET',
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+                console.log("update - WIP will have to also pass the specific item that was updated, perhaps a difference ?")
+            })
+            .catch(error => {
+                console.error(error);
+            })
+            
+        }
+
+
+        function delete_card(board_id, card_id){
+
+            let card_code = document.getElementById(`card-code-${card_id}`).getAttribute("value");
+            let queryParameter = new URLSearchParams();
+            queryParameter.append("id", `${board_id}`);
+            queryParameter.append("code", `${card_code}`); 
+            
+            let url = '/api/deleteCard/?' + queryParameter.toString();
+            
+            fetch(url, {
+                method: 'GET',
+            })
+            .then(
+                document.getElementById(`card-${card_id_value}`).remove()
+            )
+            .catch(error => {
+                console.error(error);
+            })
+            
+        }
+
+
+        function createCardInSprint(){
+            create_card(`${sprint_board_id}`, `${sprint_board_name}`) 
+            
+        }
+
+        function createCardInBacklog(){
+            create_card(`${backlog_board_id}`, `${backlog_board_name}`)
+        }
+
+        // maybe this should just create containers ?
+        function createCardWrapper(board_id, card_json = {}){            
+          
+            const board = document.getElementById(board_id);
+            const summary = document.getElementById(`${board_id}-card-count`)
+            const card_wrapper = document.createElement("div");
+            const card = document.createElement("div");
+            
+            board.append(card_wrapper);
+            card_wrapper.appendChild(card);
+
+            card_id_value = Number(board.getAttribute("data-cards"));
+            card_id_value += 1;
+
+            const card_name_value = (card_json.name) ? card_json.name : "New Card";
+ 
+            const card_icon_value = (card_json.icon) ? card_json.icon : "";
+            
+            const card_code_value = (card_json.code) ? card_json.code : "";
+            
+            const card_progress_value = (card_json.progress) ? card_json.progress : "";
+
+            const card_assignee_value = (card_json.assignee) ? card_json.assignee : "";
+            // should store
+
+            card_wrapper.setAttribute("id", `card-wrapper-${card_id_value}`); 
+            card_wrapper.setAttribute("class", "issue-wrapper")            
+            
+            card.setAttribute("id", `card-${card_id_value}`); 
+            card.setAttribute("class", "card-contents-container text-center")            
+            
+
+
+            const card_checkbox_div = document.createElement("div"); 
+            const card_checkbox_input = document.createElement("input"); 
+
+            card_checkbox_input.setAttribute("id", `card-check-${card_id_value}`);
+            card_checkbox_input.setAttribute("type", "checkbox");
+
+            card_checkbox_div.appendChild(card_checkbox_input);
+            card.appendChild(card_checkbox_div);                     
+
+
+            
+            const card_icon_div = document.createElement("div"); 
+            const card_icon_select = document.createElement("select"); 
+
+            card_icon_select.setAttribute("id", `card-icon-${card_id_value}`);
+            card_icon_select.setAttribute("class", "editable-icon");
+
+            card_icon_values.forEach(function(icon){
+                let option = document.createElement("option");
+                let image = document.createElement("img");
+                
+                image.setAttribute("src", "");
+                image.setAttribute("alt", icon);
+                console.log("icon - need to lookup images, empty is default")
+                option.value = icon;
+                
+                option.appendChild(image);
+                card_icon_select.appendChild(option);
+            })
+            
+            card_icon_div.appendChild(card_icon_select)
+            card.appendChild(card_icon_div);
+
+
+            const card_code_div = document.createElement("div"); 
+            const card_code_input = document.createElement("input"); 
+
+            card_code_input.setAttribute("id", `card-code-${card_id_value}`);
+            card_code_input.setAttribute("class", "readonly-code");
+            card_code_input.setAttribute("type", "text");
+            card_code_input.readOnly = true;
+            card_code_input.setAttribute("value", `${card_code_value}`);
+            
+            card_code_div.appendChild(card_code_input);
+            card.appendChild(card_code_div);
+            
+
+
+            const card_name_div = document.createElement("div"); 
+            const card_name_input = document.createElement("input"); 
+
+            card_name_div.setAttribute("class", "text-left");
+
+            card_name_input.setAttribute("id", `card-name-${card_id_value}`);
+            card_name_input.setAttribute("class", "editable-text-field");
+            card_name_input.setAttribute("type", "text");
+            card_name_input.setAttribute("value", `${card_name_value}`);
+
+            card_name_div.appendChild(card_name_input);
+            card.appendChild(card_name_div);
+
+
+
+            const card_progress_div = document.createElement("div"); 
+            const card_progress_select = document.createElement("select"); 
+
+            card_progress_select.setAttribute("id", `card-progress-${card_id_value}`);
+            card_progress_select.setAttribute("class", "form-select editable-icon");
+            card_progress_select.setAttribute("aria-label", "Default select example");
+
+            card_progress_values.forEach(function(val){
+                let option = document.createElement("option");
+              
+                option.value = val;
+                option.text = val;
+                
+                card_progress_select.appendChild(option);
+            })
+            
+            card_progress_div.appendChild(card_progress_select);
+            card.appendChild(card_progress_div);
+
+
+            const card_assignee_div = document.createElement("div"); 
+            const card_assignee_select = document.createElement("select"); 
+
+            card_assignee_div.setAttribute("class", "text-center")
+
+            card_assignee_values.forEach(function(value){
+                let option = document.createElement("option");
+                let image = document.createElement("img");
+                
+                image.setAttribute("src", value.img);
+                image.setAttribute("alt", value.name);
+
+                option.setAttribute("id", value.id)
+                option.value = name;
+                
+                option.appendChild(image);
+                card_assignee_select.appendChild(option);
+            })
+            
+            card_assignee_div.appendChild(card_assignee_select);
+            card.appendChild(card_assignee_div);
+
+
+
+            const card_edit_div = document.createElement("div"); 
+            const card_edit_select = document.createElement("button"); 
+            card_edit_div.text = "edit"
+            card_edit_div.setAttribute("class", "text-center")
+                        
+            card_edit_div.appendChild(card_edit_select);
+            card.appendChild(card_edit_div);
+
+
+            board.setAttribute("data-cards", card_id_value);
+            summary.setAttribute("value", `(${card_id_value} issues)`)
+
+            
+        }
+        
+
+        populate_assignees()
+        populate_tasks()
+        console.log(card_assignee_values)
+        refreshBoard(backlog_board_name, backlog_board_id);
+        refreshBoard(sprint_board_name, sprint_board_id);
+        
+
+    </script>
+
+    <!--Bootstrap's JavaScript-->
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+
+  </body>
+</html>
